@@ -11,11 +11,10 @@ class LLMHandler:
             print("Warning: GROQ_API_KEY not found in environment variables.")
         
         # Initialize Groq Client
-        # Using Llama 3 70B for high quality, or 8B for speed. 
-        # ingest_data mentions Llama 3.3 70B in main.py comments, sticking to versatile choice.
+        # Using Llama 3.3 70B for high quality and current support.
         self.llm = ChatGroq(
             temperature=0.3,
-            model_name="llama3-70b-8192",
+            model_name="llama-3.3-70b-versatile",
             api_key=self.api_key
         )
 
