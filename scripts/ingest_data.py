@@ -14,20 +14,21 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_core.documents import Document
 
 # --- CONFIGURATION ---
 VECTOR_STORE_PATH = "data/vector_store"
 COLLECTION_NAME = "store_assistant"
-# Lightweight CPU embedding model (Hugging Face)
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+# FastEmbed uses BAAI/bge-small-en-v1.5 by default
 
 import certifi
 
 # ...
 
 def get_mysql_connection():
+# ... (rest of the file remains the same until embeddings init)
+
     print(f"DEBUG: Connecting to {os.getenv('MYSQL_HOST')} as {os.getenv('MYSQL_USER')}")
     return mysql.connector.connect(
         host=os.getenv("MYSQL_HOST"),
@@ -143,8 +144,8 @@ def main():
     all_docs = product_docs + training_docs
     
     # 3. Initialize ChromaDB & Embeddings
-    print("🧠 Loading Lightweight Embeddings (CPU)...")
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    print("🧠 Loading Lightweight Embeddings (FastEmbed)...")
+    embeddings = FastEmbedEmbeddings()
     
     # Delete old DB to avoid duplicates
     if vector_store_dir.exists():

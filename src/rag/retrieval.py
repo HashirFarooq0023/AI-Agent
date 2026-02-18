@@ -1,7 +1,7 @@
 import os
 from typing import List, Dict
 from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 
 class RetrievalSystem:
     def __init__(self):
@@ -11,10 +11,10 @@ class RetrievalSystem:
         
         # Settings matches ingest_data.py
         self.collection_name = "store_assistant"
-        self.embedding_model_name = "all-MiniLM-L6-v2"
+        # Using default FastEmbed model (BAAI/bge-small-en-v1.5) which is lighter and better
         
-        # Load Embeddings
-        self.embeddings = HuggingFaceEmbeddings(model_name=self.embedding_model_name)
+        # Load Embeddings (FastEmbed is lightweight, no PyTorch)
+        self.embeddings = FastEmbedEmbeddings()
         
         # Initialize Vector Store
         if os.path.exists(self.vector_store_path):
