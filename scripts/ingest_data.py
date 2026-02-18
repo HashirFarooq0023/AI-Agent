@@ -6,6 +6,10 @@ Ingests Product data (MySQL) and Training data (JSON) into ChromaDB.
 import os
 import json
 import mysql.connector
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -19,13 +23,22 @@ COLLECTION_NAME = "store_assistant"
 # Lightweight CPU embedding model (Hugging Face)
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
+import certifi
+
+# ...
+
 def get_mysql_connection():
-    """Create a MySQL connection."""
+    print(f"DEBUG: Connecting to {os.getenv('MYSQL_HOST')} as {os.getenv('MYSQL_USER')}")
     return mysql.connector.connect(
-        host=os.getenv("MYSQL_HOST", "localhost"),
-        user=os.getenv("MYSQL_USER", "root"),
-        password=os.getenv("MYSQL_PASSWORD", ""),
-        database=os.getenv("MYSQL_DATABASE", "ecommerce_db"),
+        host=os.getenv("MYSQL_HOST"),
+        user=os.getenv("MYSQL_USER"),
+        password=os.getenv("MYSQL_PASSWORD"),
+        database=os.getenv("MYSQL_DATABASE"),
+        port=int(os.getenv("MYSQL_PORT", 4000)),
+        ssl_disabled=False,
+        ssl_verify_cert=True,
+        ssl_ca=certifi.where(),  # Explicitly provide CA bundle
+        connect_timeout=60
     )
 
 def fetch_products() -> List[Dict[str, Any]]:

@@ -98,8 +98,21 @@ async def sync_products(request: SyncRequest, api_key: str = Security(verify_api
     """
     try:
         # Run the ingestion script programmatically
-        os.system("python scripts/ingest_products.py")
-        return {"status": "success", "message": "Product database updated."}
+        import subprocess
+        
+        # Use simple python command as we are in the same environment
+        result = subprocess.run(
+            ["python", "scripts/ingest_data.py"], 
+            capture_output=True, 
+            text=True,
+            check=True
+        )
+        
+        print(f"Ingestion Output: {result.stdout}")
+        if result.stderr:
+            print(f"Ingestion Errors: {result.stderr}")
+            
+        return {"status": "success", "message": "Product database updated.", "logs": result.stdout}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
