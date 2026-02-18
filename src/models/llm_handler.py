@@ -1,47 +1,57 @@
 import os
-from groq import Groq
-from dotenv import load_dotenv
-
-load_dotenv()
-
+from typing import List, Dict, Optional
+from langchain_groq import ChatGroq
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 class LLMHandler:
     def __init__(self):
         self.api_key = os.getenv("GROQ_API_KEY")
-        self.client = Groq(api_key=self.api_key)
-        # Using the smart 70B model
-        self.model = "llama-3.3-70b-versatile"
+        if not self.api_key:
+            print("Warning: GROQ_API_KEY not found in environment variables.")
+        
+        # Initialize Groq Client
+        # Using Llama 3 70B for high quality, or 8B for speed. 
+        # ingest_data mentions Llama 3.3 70B in main.py comments, sticking to versatile choice.
+        self.llm = ChatGroq(
+            temperature=0.3,
+            model_name="llama3-70b-8192",
+            api_key=self.api_key
+        )
 
-    def generate(self, prompt: str) -> str:
-        """Simple completion without external context (used for keyword extraction)."""
+    def generate(self, prompt_text: str) -> str:
+        """
+        Simple generation from a string prompt.
+        """
         try:
-            completion = self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model,
-                temperature=0.2,
-            )
-            return completion.choices[0].message.content
+            messages = [("user", prompt_text)]
+            response = self.llm.invoke(messages)
+            return response.content
         except Exception as e:
-            return f"Error: {str(e)}"
+            return f"Error generating response: {e}"
 
-    def generate_with_context(self, query: str, context: list, system_prompt: str) -> str:
-        # 1. Context
-        context = context or []
-        context_str = "\n".join([item.get("text", "") for item in context])
-
-        # 2. Messages
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "system", "content": f"CONTEXT (Real Inventory):\n{context_str}"},
-            {"role": "user", "content": query},
-        ]
-
+    def generate_with_context(self, query: str, context: List[Dict], system_prompt: str) -> str:
+        """
+        RAG Generation: context + system prompt + user query.
+        """
         try:
-            completion = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model,
-                temperature=0.1,  # Strict for accurate sales
-            )
-            return completion.choices[0].message.content
+            # Format context into a string
+            context_str = ""
+            if context:
+                context_str = "HERE IS THE RETRIEVED CONTEXT (Products/Info):\n"
+                for idx, item in enumerate(context):
+                    context_str += f"--- Item {idx+1} ---\n{item.get('content', '')}\n"
+            else:
+                context_str = "No specific product information found for this query."
+
+            # Construct the full prompt
+            messages = [
+                ("system", system_prompt),
+                ("system", context_str),
+                ("user", query)
+            ]
+
+            response = self.llm.invoke(messages)
+            return response.content
         except Exception as e:
-            return f"Error: {str(e)}"
+            return f"Error generating response: {e}"
